@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Sparkles, MessageCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 
 export function Navbar() {
@@ -29,6 +29,11 @@ export function Navbar() {
             <>
               <Link href="/dashboard">
                 <Button variant="ghost">Dashboard</Button>
+              </Link>
+              <Link href="/chat">
+                <Button variant="ghost" size="icon" className="text-neutral-400 hover:text-purple-400">
+                  <MessageCircle className="w-5 h-5" />
+                </Button>
               </Link>
               <Button variant="outline" onClick={logout}>
                 Logout
