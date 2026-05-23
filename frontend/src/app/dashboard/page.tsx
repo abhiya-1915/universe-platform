@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
 import { Sparkles, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function DashboardPage() {
   const [events, setEvents] = useState([]);
