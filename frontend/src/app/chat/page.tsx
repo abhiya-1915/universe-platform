@@ -4,32 +4,24 @@ import { useState, useEffect, useRef } from "react";
 import { Navbar } from "@/components/shared/Navbar";
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
-import { Send, Hash, Users, Sparkles } from "lucide-react";
+import { Send, Hash, Users, Sparkles, Loader2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
+import api from "@/lib/api";
 
 const PREDEFINED_CHATS = [
   {
     id: "campus-general",
     name: "Campus General",
     icon: <Users className="w-5 h-5" />,
-    description: "Hangout and talk with everyone on campus.",
-    messages: [
-      { id: 1, sender: "Alice M.", text: "Hey everyone! Is the library open late tonight?", isMe: false, time: "10:00 AM" },
-      { id: 2, sender: "Bob Smith", text: "Yes, until 11 PM during finals week!", isMe: false, time: "10:02 AM" },
-      { id: 3, sender: "Charlie", text: "Anyone want to grab coffee at the student center?", isMe: false, time: "10:15 AM" },
-    ]
+    description: "Hangout and talk with everyone on campus."
   },
   {
     id: "tech-club",
     name: "Tech Club",
     icon: <Hash className="w-5 h-5" />,
-    description: "Discussing coding, startups, and tech news.",
-    messages: [
-      { id: 1, sender: "Sarah (Admin)", text: "Reminder: Hackathon kickoff is this Friday at 5 PM!", isMe: false, time: "9:00 AM" },
-      { id: 2, sender: "David", text: "I'm looking for a team for the hackathon. I do React!", isMe: false, time: "9:30 AM" },
-    ]
+    description: "Discussing coding, startups, and tech news."
   }
 ];
 
@@ -38,8 +30,9 @@ export default function ChatPage() {
   const router = useRouter();
   
   const [activeChat, setActiveChat] = useState(PREDEFINED_CHATS[0]);
-  const [messages, setMessages] = useState(PREDEFINED_CHATS[0].messages);
+  const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -48,32 +41,64 @@ export default function ChatPage() {
     }
   }, [user, router]);
 
+  // Fetch messages when room changes
   useEffect(() => {
-    // Scroll to bottom whenever messages change
+    const fetchMessages = async () => {
+      if (!user) return;
+      setIsLoading(true);
+      try {
+        const res = await api.get(`/chat/${activeChat.id}`);
+        if (res.data.success) {
+          setMessages(res.data.data.map((msg: any) => ({
+            ...msg,
+            isMe: msg.senderId === user.id,
+            time: new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          })));
+        }
+      } catch (error) {
+        console.error("Failed to fetch messages", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchMessages();
+  }, [activeChat, user]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !user) return;
 
-    const newMsg = {
+    const tempMessage = {
       id: Date.now(),
-      sender: user?.name || "Me",
+      sender: user.name,
       text: newMessage,
       isMe: true,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    setMessages([...messages, newMsg]);
+    // Optimistic update
+    setMessages([...messages, tempMessage]);
+    const messageContent = newMessage;
     setNewMessage("");
+
+    try {
+      await api.post(`/chat/${activeChat.id}`, { content: messageContent });
+      // In a real app, you might fetch again or use the returned object, but optimistic is fine for now
+    } catch (error) {
+      console.error("Failed to send message", error);
+      // Remove the temp message if failed
+      setMessages(messages.filter(m => m.id !== tempMessage.id));
+    }
   };
 
   const switchChat = (chatId: string) => {
     const chat = PREDEFINED_CHATS.find(c => c.id === chatId);
     if (chat) {
       setActiveChat(chat);
-      setMessages(chat.messages);
     }
   };
 
@@ -123,26 +148,37 @@ export default function ChatPage() {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {messages.map((msg) => (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                key={msg.id} 
-                className={`flex flex-col max-w-[75%] ${msg.isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`}
-              >
-                {!msg.isMe && (
-                  <span className="text-xs text-neutral-400 ml-2 mb-1">{msg.sender}</span>
-                )}
-                <div className={`p-4 rounded-2xl ${
-                  msg.isMe 
-                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-br-none' 
-                    : 'bg-neutral-800 text-neutral-100 rounded-bl-none'
-                }`}>
-                  <p className="leading-relaxed">{msg.text}</p>
-                </div>
-                <span className="text-[10px] text-neutral-500 mt-1 mx-1">{msg.time}</span>
-              </motion.div>
-            ))}
+            {isLoading ? (
+              <div className="flex justify-center items-center h-full">
+                <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-neutral-500 gap-2">
+                <MessageCircle className="w-12 h-12 text-neutral-700" />
+                <p>No messages yet. Start the conversation!</p>
+              </div>
+            ) : (
+              messages.map((msg) => (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  key={msg.id} 
+                  className={`flex flex-col max-w-[75%] ${msg.isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`}
+                >
+                  {!msg.isMe && (
+                    <span className="text-xs text-neutral-400 ml-2 mb-1">{msg.sender}</span>
+                  )}
+                  <div className={`p-4 rounded-2xl ${
+                    msg.isMe 
+                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-br-none' 
+                      : 'bg-neutral-800 text-neutral-100 rounded-bl-none'
+                  }`}>
+                    <p className="leading-relaxed">{msg.text}</p>
+                  </div>
+                  <span className="text-[10px] text-neutral-500 mt-1 mx-1">{msg.time}</span>
+                </motion.div>
+              ))
+            )}
             <div ref={messagesEndRef} />
           </div>
 
@@ -153,12 +189,12 @@ export default function ChatPage() {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder={`Message #${activeChat.name.toLowerCase().replace(' ', '-')}...`}
-                className="flex-1 bg-neutral-900 border-neutral-800 focus-visible:ring-purple-500 rounded-full px-6"
+                className="bg-neutral-900 border-neutral-800 focus-visible:ring-purple-500 rounded-full px-6 flex-1"
               />
               <Button 
                 type="submit" 
                 disabled={!newMessage.trim()}
-                className="bg-purple-600 hover:bg-purple-700 rounded-full w-12 h-12 p-0 flex items-center justify-center"
+                className="bg-purple-600 hover:bg-purple-700 rounded-full w-12 h-12 p-0 flex items-center justify-center shrink-0"
               >
                 <Send className="w-5 h-5" />
               </Button>

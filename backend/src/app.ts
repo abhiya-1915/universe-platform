@@ -19,9 +19,11 @@ app.get('/health', (req, res) => {
 import authRoutes from './routes/auth.routes';
 import eventRoutes from './routes/event.routes';
 import announcementRoutes from './routes/announcement.routes';
+import chatRoutes from './routes/chat';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/chat', chatRoutes);
 
 export default app;
