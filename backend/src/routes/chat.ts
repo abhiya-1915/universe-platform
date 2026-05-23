@@ -1,12 +1,12 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticate } from '../middleware/auth';
+import { protect, AuthenticatedRequest } from '../middlewares/auth.middleware';
 
 const router = Router();
 const prisma = new PrismaClient();
 
 // Get messages for a specific room
-router.get('/:roomId', authenticate, async (req, res) => {
+router.get('/:roomId', protect, async (req: any, res: Response) => {
   try {
     const { roomId } = req.params;
     const messages = await prisma.message.findMany({
@@ -37,7 +37,7 @@ router.get('/:roomId', authenticate, async (req, res) => {
 });
 
 // Post a new message to a room
-router.post('/:roomId', authenticate, async (req, res) => {
+router.post('/:roomId', protect, async (req: any, res: Response) => {
   try {
     const { roomId } = req.params;
     const { content } = req.body;

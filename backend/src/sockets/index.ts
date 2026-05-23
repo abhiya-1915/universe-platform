@@ -34,6 +34,7 @@ export const setupSockets = (io: Server) => {
         const message = await prisma.message.create({
           data: {
             content: data.content,
+            roomId: data.eventId,
             senderId: socket.data.user.id,
           },
           include: { sender: { select: { name: true, username: true } } },
