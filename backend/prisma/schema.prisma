@@ -28,6 +28,7 @@ model User {
   messages      Message[]
   comments      Comment[]
   notifications Notification[]
+  organizedEvents Event[]      @relation("EventOrganizer")
 }
 
 model Event {
@@ -38,9 +39,11 @@ model Event {
   tags        String[]
   date        DateTime
   location    String?
+  organizerId String?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   
+  organizer   User?          @relation("EventOrganizer", fields: [organizerId], references: [id])
   registrations Registration[]
 }
 

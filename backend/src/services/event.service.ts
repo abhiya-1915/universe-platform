@@ -54,7 +54,7 @@ export class EventService {
     return registrations.map(reg => reg.event);
   }
 
-  async createEvent(data: { title: string; description: string; date: string; location?: string }) {
+  async createEvent(data: { title: string; description: string; date: string; location?: string; organizerId?: string }) {
     if (!data.title || !data.description || !data.date) {
       throw new Error('Title, description, and date are required.');
     }
@@ -63,7 +63,10 @@ export class EventService {
     const tags = extractTags(data.description);
 
     return eventRepository.create({
-      ...data,
+      title: data.title,
+      description: data.description,
+      location: data.location,
+      organizerId: data.organizerId,
       summary,
       tags,
       date: new Date(data.date),
@@ -87,7 +90,20 @@ export class EventService {
     const existingReg = await eventRepository.findRegistration(userId, eventId);
     if (existingReg) throw new Error('Already registered for this event.');
 
-    return eventRepository.registerUser(userId, eventId);
+    const registration = await eventRepository.registerUser(userId, eventId);
+
+    // Create a notification for the organizer
+    if (event.organizerId) {
+      const student = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+      await prisma.notification.create({
+        data: {
+          userId: event.organizerId,
+          content: `${student?.name || 'A student'} just registered for your event: ${event.title}`
+        }
+      });
+    }
+
+    return registration;
   }
 }
 

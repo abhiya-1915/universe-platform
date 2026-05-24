@@ -3,9 +3,12 @@ import { eventService } from '../services/event.service';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 
 export class EventController {
-  async createEvent(req: Request, res: Response) {
+  async createEvent(req: AuthenticatedRequest, res: Response) {
     try {
-      const result = await eventService.createEvent(req.body);
+      if (!req.user) return res.status(401).json({ success: false, message: 'Not authorized' });
+      // Pass the user ID as organizerId
+      const payload = { ...req.body, organizerId: req.user.id };
+      const result = await eventService.createEvent(payload);
       res.status(201).json({ success: true, data: result });
     } catch (error: any) {
       res.status(400).json({ success: false, message: error.message });

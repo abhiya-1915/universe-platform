@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/authStore";
 import { motion } from "framer-motion";
 import { Sparkles, MessageCircle, Calendar } from "lucide-react";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { NotificationsMenu } from "./NotificationsMenu";
 
 export function Navbar() {
   const { user, logout } = useAuthStore();
@@ -40,6 +41,7 @@ export function Navbar() {
                   <MessageCircle className="w-5 h-5" />
                 </Button>
               </Link>
+              <NotificationsMenu />
               <Button variant="outline" onClick={logout}>
                 Logout
               </Button>

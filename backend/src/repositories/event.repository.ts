@@ -2,7 +2,7 @@ import prisma from '../config/db';
 import { Prisma } from '@prisma/client';
 
 export class EventRepository {
-  async create(data: Prisma.EventCreateInput) {
+  async create(data: Prisma.EventUncheckedCreateInput) {
     return prisma.event.create({ data });
   }
 
