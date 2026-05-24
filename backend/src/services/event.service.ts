@@ -40,6 +40,20 @@ export class EventService {
     return getRecommendedEvents(userEvents, availableEvents, 3);
   }
 
+  async getEnrolledEvents(userId: string) {
+    const registrations = await prisma.registration.findMany({
+      where: { userId },
+      include: {
+        event: {
+          select: { id: true, tags: true, title: true, description: true, summary: true, date: true, location: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    return registrations.map(reg => reg.event);
+  }
+
   async createEvent(data: { title: string; description: string; date: string; location?: string }) {
     if (!data.title || !data.description || !data.date) {
       throw new Error('Title, description, and date are required.');

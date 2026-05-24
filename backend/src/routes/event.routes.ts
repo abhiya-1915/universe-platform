@@ -6,6 +6,7 @@ const router = Router();
 
 router.get('/', eventController.getAllEvents);
 router.get('/recommendations/for-you', protect, eventController.getRecommendations);
+router.get('/enrolled', protect, eventController.getEnrolledEvents);
 router.get('/:id', eventController.getEventById);
 
 // Protected routes

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
 import { motion } from "framer-motion";
-import { Sparkles, MessageCircle } from "lucide-react";
+import { Sparkles, MessageCircle, Calendar } from "lucide-react";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 
 export function Navbar() {
@@ -30,8 +30,13 @@ export function Navbar() {
               <Link href="/dashboard">
                 <Button variant="ghost">Dashboard</Button>
               </Link>
+              <Link href="/my-events">
+                <Button variant="ghost" size="icon" className="text-neutral-400 hover:text-blue-400" title="My Enrolled Events">
+                  <Calendar className="w-5 h-5" />
+                </Button>
+              </Link>
               <Link href="/chat">
-                <Button variant="ghost" size="icon" className="text-neutral-400 hover:text-purple-400">
+                <Button variant="ghost" size="icon" className="text-neutral-400 hover:text-purple-400" title="Global Chat">
                   <MessageCircle className="w-5 h-5" />
                 </Button>
               </Link>
