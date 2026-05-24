@@ -40,6 +40,24 @@ export const setupSockets = (io: Server) => {
           include: { sender: { select: { name: true, username: true } } },
         });
 
+        // NLP: Extract keywords from message to build user interest profile
+        const { extractTags } = await import('../utils/nlp');
+        const extractedInterests = extractTags(data.content);
+        
+        if (extractedInterests.length > 0) {
+          const user = await prisma.user.findUnique({ where: { id: socket.data.user.id } });
+          if (user) {
+            const currentInterests = user.interests || [];
+            // Combine and keep unique
+            const updatedInterests = Array.from(new Set([...currentInterests, ...extractedInterests]));
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { interests: updatedInterests }
+            });
+            console.log(`Updated interests for ${user.username || user.name}:`, updatedInterests);
+          }
+        }
+
         // Broadcast to event room
         io.to(`event_${data.eventId}`).emit('new_message', { ...message, eventId: data.eventId });
       } catch (error) {

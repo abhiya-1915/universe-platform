@@ -5,13 +5,24 @@ import prisma from '../config/db';
 
 export class EventService {
   async getRecommendations(userId: string) {
-    // 1. Get user's registered events with their tags
-    const registrations = await prisma.registration.findMany({
-      where: { userId },
-      include: { event: { select: { tags: true } } }
-    });
+    // 1. Get user's registered events with their tags AND user's conversational interests
+    const [registrations, user] = await Promise.all([
+      prisma.registration.findMany({
+        where: { userId },
+        include: { event: { select: { tags: true } } }
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { interests: true }
+      })
+    ]);
     
     const userEvents = registrations.map(reg => reg.event);
+    
+    // Inject conversational interests as a virtual event
+    if (user && user.interests && user.interests.length > 0) {
+      userEvents.push({ tags: user.interests } as any);
+    }
 
     // 2. Get all upcoming events (or just all events for now)
     const allEvents = await prisma.event.findMany({
