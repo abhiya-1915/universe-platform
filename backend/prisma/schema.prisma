@@ -33,6 +33,8 @@ model Event {
   id          String         @id @default(uuid())
   title       String
   description String
+  summary     String?
+  tags        String[]
   date        DateTime
   location    String?
   createdAt   DateTime       @default(now())

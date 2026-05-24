@@ -5,6 +5,7 @@ import { protect, authorize } from '../middlewares/auth.middleware';
 const router = Router();
 
 router.get('/', eventController.getAllEvents);
+router.get('/recommendations/for-you', protect, eventController.getRecommendations);
 router.get('/:id', eventController.getEventById);
 
 // Protected routes

@@ -11,6 +11,8 @@ interface Event {
   id: string;
   title: string;
   description: string;
+  summary?: string;
+  tags?: string[];
   date: string;
   location?: string;
 }
@@ -30,7 +32,18 @@ export function EventCard({ event, index }: { event: Event; index: number }) {
           <CardTitle className="text-xl text-neutral-50">{event.title}</CardTitle>
         </CardHeader>
         <CardContent className="flex-1">
-          <p className="text-neutral-400 text-sm line-clamp-3 mb-4">{event.description}</p>
+          <p className="text-neutral-400 text-sm line-clamp-3 mb-4">{event.summary || event.description}</p>
+          
+          {event.tags && event.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {event.tags.map(tag => (
+                <span key={tag} className="text-xs px-2 py-1 bg-purple-500/20 text-purple-300 rounded-md">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+
           <div className="flex flex-col gap-2 text-sm text-neutral-500">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />

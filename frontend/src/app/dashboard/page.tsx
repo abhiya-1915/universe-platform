@@ -13,6 +13,7 @@ import Link from "next/link";
 export default function DashboardPage() {
   const [events, setEvents] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
@@ -25,12 +26,14 @@ export default function DashboardPage() {
 
     const fetchData = async () => {
       try {
-        const [eventsRes, announcementsRes] = await Promise.all([
+        const [eventsRes, announcementsRes, recsRes] = await Promise.all([
           api.get("/events"),
-          api.get("/announcements")
+          api.get("/announcements"),
+          api.get("/events/recommendations/for-you").catch(() => ({ data: { data: [] } }))
         ]);
         setEvents(eventsRes.data.data);
         setAnnouncements(announcementsRes.data.data);
+        setRecommendations(recsRes.data.data);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
       } finally {
@@ -82,6 +85,19 @@ export default function DashboardPage() {
                       <h3 className="text-lg font-bold mb-2 text-neutral-100">{ann.title}</h3>
                       <p className="text-sm text-neutral-400 leading-relaxed">{ann.content}</p>
                     </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {recommendations.length > 0 && (
+              <section>
+                <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-yellow-400" /> ✨ Recommended for You
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {recommendations.map((event: any, index) => (
+                    <EventCard key={`rec-${event.id}`} event={event} index={index} />
                   ))}
                 </div>
               </section>

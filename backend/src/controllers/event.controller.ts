@@ -21,6 +21,16 @@ export class EventController {
     }
   }
 
+  async getRecommendations(req: AuthenticatedRequest, res: Response) {
+    try {
+      if (!req.user) return res.status(401).json({ success: false, message: 'Not authorized' });
+      const result = await eventService.getRecommendations(req.user.id);
+      res.status(200).json({ success: true, data: result });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
   async getEventById(req: Request, res: Response) {
     try {
       const result = await eventService.getEventById(req.params.id);
